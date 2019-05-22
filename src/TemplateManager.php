@@ -26,10 +26,10 @@ class TemplateManager
             $quote = $data['quote'];
 
             $_quoteFromRepository = QuoteRepository::getInstance()->getById($quote->id);
-            $usefulObject = SiteRepository::getInstance()->getById($quote->siteId);
+            $site = SiteRepository::getInstance()->getById($quote->siteId);
             $destinationOfQuote = DestinationRepository::getInstance()->getById($quote->destinationId);
 
-            $text = $this->computeQuoteDestinationLink($text, $destinationOfQuote, $usefulObject, $_quoteFromRepository);
+            $text = $this->computeQuoteDestinationLink($text, $destinationOfQuote, $site, $_quoteFromRepository);
             $text = $this->computeQuoteSummaryHtml($text, $_quoteFromRepository);
             $text = $this->computeQuoteSummary($text, $_quoteFromRepository);
 
@@ -53,17 +53,14 @@ class TemplateManager
     /**
      * @param $text
      * @param Destination $destinationOfQuote
-     * @param Site $usefulObject
+     * @param Site $site
      * @param Quote $_quoteFromRepository
      * @return mixed
      */
-    private function computeQuoteDestinationLink($text, Destination $destinationOfQuote, Site $usefulObject, Quote $_quoteFromRepository)
+    private function computeQuoteDestinationLink($text, Destination $destinationOfQuote, Site $site, Quote $_quoteFromRepository)
     {
         if (strpos($text, '[quote:destination_link]') !== false) {
-            $destionationLink = '';
-            if ($destinationOfQuote instanceof Destination && $usefulObject instanceof Site && $_quoteFromRepository instanceof Quote)
-                $destionationLink = $usefulObject->url . '/' . $destinationOfQuote->countryName . '/quote/' . $_quoteFromRepository->id;
-
+            $destionationLink = $site->url . '/' . $destinationOfQuote->countryName . '/quote/' . $_quoteFromRepository->id;
             $text = str_replace('[quote:destination_link]', $destionationLink, $text);
         }
 
@@ -79,11 +76,9 @@ class TemplateManager
     {
         $containsSummaryHtml = strpos($text, '[quote:summary_html]');
         if ($containsSummaryHtml !== false) {
-            $containsSummaryHtmlData = $_quoteFromRepository instanceof Quote ? Quote::renderHtml($_quoteFromRepository) : '';
-
             $text = str_replace(
                 '[quote:summary_html]',
-                $containsSummaryHtmlData,
+                Quote::renderHtml($_quoteFromRepository),
                 $text
             );
         }
@@ -99,11 +94,9 @@ class TemplateManager
     {
         $containsSummary = strpos($text, '[quote:summary]');
         if ($containsSummary !== false) {
-            $containsSummaryData = $_quoteFromRepository instanceof Quote ? Quote::renderText($_quoteFromRepository) : '';
-
             $text = str_replace(
                 '[quote:summary]',
-                $containsSummaryData,
+                Quote::renderText($_quoteFromRepository),
                 $text
             );
         }
@@ -118,8 +111,7 @@ class TemplateManager
     private function computeQuoteDestinationName($text, Destination $destinationOfQuote)
     {
         if (strpos($text, '[quote:destination_name]') !== false) {
-            $destinationName = $destinationOfQuote instanceof Destination ? $destinationOfQuote->countryName : '';
-            $text = str_replace('[quote:destination_name]', $destinationName, $text);
+            $text = str_replace('[quote:destination_name]', $destinationOfQuote->countryName, $text);
         }
         return $text;
     }
